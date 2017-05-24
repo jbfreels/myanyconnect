@@ -15,21 +15,20 @@ I copy to `/usr/local/bin`, but a link works or just keep it at the root of your
 
 # usage
 ```
-Usage: myanyconnect COMMAND
+Usage: myanyconnect OPTIONS HOST
 
 VPN helper utility powered by Cicso AnyConnect client for OSX
 
 Options:
   -d, --disconnect          Disconnect from the VPN
   -s, --status              Status of the VPN
-  -H, --host                Host to use when connecting to the VPN
   -u, --username            Username to use when connecting to the VPN
   -p, --password            Password to use when connecting to the VPN
   -h, --help                Display this help
 ```
 # examples
 ## connecting
-`myanyconnect -H vpn.mycompany.com`
+`myanyconnect vpn.mycompany.com`
 ```
 username: jbfreels
 password: 
@@ -43,7 +42,7 @@ Disconnected
 ```
 
 ## no user input connection
-`myanyconnect -H vpn.mycompany.com -p MYSECUREPASSWORD`
+`myanyconnect -p MYSECUREPASSWORD vpn.mycompany.com`
 ```
 Connected
 ```
