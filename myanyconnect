@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+#### Description: VPN helper utility powered by the Cisco AnyConnect client for OSX
+#### Author: J.B. Freels <jbfreels@me.com>
+#### License: MIT
+
+VPN_USERNAME=$USER 
+VPN_HOST="${@: -1}"
+VPN_PATH="/opt/cisco/anyconnect/bin/vpn"
+VPN_TMP="/tmp/vpn_answers"
+TIMEOUT_BIN=$(which timeout | which gtimeout)
+
+# make sure client is installed
+if [[ ! -e $VPN_PATH ]]; then
+  echo 'Cannot find VPN client - Is the Cisco AnyConnect client installed?'  
+  exit 1
+fi
+
+print_help () {
+  echo
+  echo "Usage: $(basename $0) OPTIONS HOST"
+  echo
+  echo "VPN helper utility powered by Cicso AnyConnect client for OSX"
+  echo
+  echo "Options:"
+  echo "  -d, --disconnect          Disconnect from the VPN"
+  echo "  -s, --status              Status of the VPN"
+  echo "  -u, --username            Username to use when connecting to the VPN"
+  echo "  -p, --password            Password to use when connecting to the VPN"
+  echo "  -h, --help                Display this help"
+  echo
+  exit 0
+}
+
+# call vpn status and only get what we need
+anyconnect_get_status () {
+  $VPN_PATH status | grep -m 1 '>>' | cut -d: -f2 | cut -c 2-
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      print_help
+      ;;
+    -d|--disconnect)
+      $VPN_PATH disconnect &> /dev/null && echo "Disconnected"
+      exit 0
+      ;;
+    -s|--status)
+      echo "status: $(anyconnect_get_status)"
+      exit 0
+      ;;
+    -u|--username)
+      VPN_USERNAME="$2"
+      shift
+      ;;
+    -p|--password)
+      VPN_PASSWORD="$2"
+      shift
+      ;;
+  esac
+  shift
+done
+
+# display status
+if [[ -n $VPN_STATUS ]]; then 
+  echo "status: $(anyconnect_get_status)"
+  exit 0
+fi
+
+# verify we have a host
+ping -c 1 $VPN_HOST &> /dev/null
+if [[ "$?" > 0 ]]; then
+  echo "Could not contact host '$VPN_HOST'."
+  print_help
+  exit 1
+fi
+
+# verify not connected
+if [[ $(anyconnect_get_status) == "Connected" ]]; then
+  echo "Already connected."
+  exit 1
+fi
+
+# get password
+if [[ -z "$VPN_PASSWORD" ]]; then
+  echo "username: $VPN_USERNAME"
+  echo -n "password: "
+  read -s VPN_PASSWORD 
+  echo
+fi
+
+# I'm utilizing a tmp file because piping the input
+# was unreliable on my system.  Could be my VPN server,
+# but randomly the login would repeat infinity without 
+# entering a password.  Maybe move the tmp file to your
+# home directory.  I didn't want that to be the default
+# behavior.  
+echo -e "$VPN_USERNAME\n$VPN_PASSWORD\n" > $VPN_TMP
+$TIMEOUT_BIN 5s $VPN_PATH -s connect $VPN_HOST < $VPN_TMP > /dev/null && echo "Connected" || echo "Error connecting"
+rm $VPN_TMP 
