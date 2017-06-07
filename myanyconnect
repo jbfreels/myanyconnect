@@ -89,6 +89,8 @@ if [[ -z "$VPN_PASSWORD" ]]; then
   echo
 fi
 
+CONNECTED=0
+
 # I'm utilizing a tmp file because piping the input
 # was unreliable on my system.  Could be my VPN server,
 # but randomly the login would repeat infinity without 
@@ -96,5 +98,8 @@ fi
 # home directory.  I didn't want that to be the default
 # behavior.  
 echo -e "$VPN_USERNAME\n$VPN_PASSWORD\n" > $VPN_TMP
-$TIMEOUT_BIN 5s $VPN_PATH -s connect $VPN_HOST < $VPN_TMP > /dev/null && echo "Connected" || echo "Error connecting"
+while [ $CONNECTED == 0 ]; do
+  $TIMEOUT_BIN 5s $VPN_PATH -s connect $VPN_HOST < $VPN_TMP > /dev/null && CONNECTED=1 || echo "Error connecting"
+done
+
 rm $VPN_TMP 
