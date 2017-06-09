@@ -46,7 +46,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     -s|--status)
-      echo "status: $(anyconnect_get_status)"
+      echo "$(anyconnect_get_status)"
       exit 0
       ;;
     -u|--username)
@@ -99,7 +99,9 @@ CONNECTED=0
 # behavior.  
 echo -e "$VPN_USERNAME\n$VPN_PASSWORD\n" > $VPN_TMP
 while [ $CONNECTED == 0 ]; do
-  $TIMEOUT_BIN 5s $VPN_PATH -s connect $VPN_HOST < $VPN_TMP > /dev/null && CONNECTED=1 || echo "Error connecting"
+  $TIMEOUT_BIN 5s $VPN_PATH -s connect $VPN_HOST < $VPN_TMP > /dev/null && CONNECTED=1 || echo "error connecting: retrying..."
 done
+
+echo "Connected"
 
 rm $VPN_TMP 
