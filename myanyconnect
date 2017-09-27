@@ -90,6 +90,7 @@ if [[ -z "$VPN_PASSWORD" ]]; then
 fi
 
 CONNECTED=0
+TRY=3
 
 # I'm utilizing a tmp file because piping the input
 # was unreliable on my system.  Could be my VPN server,
@@ -98,10 +99,17 @@ CONNECTED=0
 # home directory.  I didn't want that to be the default
 # behavior.  
 echo -e "$VPN_USERNAME\n$VPN_PASSWORD\n" > $VPN_TMP
-while [ $CONNECTED == 0 ]; do
+while [[ $TRY -gt 0 ]]; do
   $TIMEOUT_BIN 5s $VPN_PATH -s connect $VPN_HOST < $VPN_TMP > /dev/null && CONNECTED=1 || echo "error connecting: retrying..."
+  ((TRY-=1))
 done
 
-echo "Connected"
-
 rm $VPN_TMP 
+
+if [[ $CONNECTED == 1 ]]; then 
+  echo "Connected"
+  exit 0
+else
+  echo "Sorry, couldn't connect :("
+  exit 1
+fi 
